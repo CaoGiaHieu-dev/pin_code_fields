@@ -646,125 +646,54 @@ class _PinCodeTextFieldState extends State<PinCodeTextField>
     );
   }
 
-  Future<void> _showPasteDialog(String pastedText) {
-    final formattedPastedText = pastedText
-        .trim()
-        .substring(0, min(pastedText.trim().length, widget.length));
-
-    final defaultPastedTextStyle = TextStyle(
-      fontWeight: FontWeight.bold,
-      color: Theme.of(context).colorScheme.onSecondary,
-    );
-
-    return showDialog(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) => _dialogConfig.platform == Platform.iOS
-          ? CupertinoAlertDialog(
-              title: Text(_dialogConfig.dialogTitle!),
-              content: RichText(
-                text: TextSpan(
-                  text: _dialogConfig.dialogContent,
-                  style: TextStyle(
-                    color: Theme.of(context).textTheme.button!.color,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: formattedPastedText,
-                      style: widget.pastedTextStyle ?? defaultPastedTextStyle,
-                    ),
-                    TextSpan(
-                      text: "?",
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.button!.color,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              actions: _getActionButtons(formattedPastedText),
-            )
-          : AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              title: Text(_dialogConfig.dialogTitle!),
-              content: RichText(
-                text: TextSpan(
-                  text: _dialogConfig.dialogContent,
-                  style: TextStyle(
-                      color: Theme.of(context).textTheme.button!.color),
-                  children: [
-                    TextSpan(
-                      text: formattedPastedText,
-                      style: widget.pastedTextStyle ?? defaultPastedTextStyle,
-                    ),
-                    TextSpan(
-                      text: " ?",
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.button!.color,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              actions: _getActionButtons(formattedPastedText),
-            ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    var textField = Directionality(
-      textDirection: widget.errorTextDirection,
-      child: Padding(
-        padding: widget.errorTextMargin,
-        child: TextFormField(
-          textInputAction: widget.textInputAction,
-          controller: _textEditingController,
-          focusNode: _focusNode,
-          enabled: widget.enabled,
-          autofillHints: widget.enablePinAutofill && widget.enabled
-              ? <String>[AutofillHints.oneTimeCode]
-              : null,
-          autofocus: widget.autoFocus,
-          autocorrect: false,
-          keyboardType: widget.keyboardType,
-          keyboardAppearance: widget.keyboardAppearance,
-          textCapitalization: widget.textCapitalization,
-          validator: widget.validator,
-          onSaved: widget.onSaved,
-          autovalidateMode: widget.autovalidateMode,
-          inputFormatters: [
-            ...widget.inputFormatters,
-            LengthLimitingTextInputFormatter(
-              widget.length,
-            ), // this limits the input length
-          ],
-          // trigger on the complete event handler from the keyboard
-          onFieldSubmitted: widget.onSubmitted,
-          enableInteractiveSelection: false,
-          showCursor: false,
-          // using same as background color so tha it can blend into the view
-          cursorWidth: 0.01,
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.all(0),
-            border: InputBorder.none,
-            fillColor: widget.backgroundColor,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            disabledBorder: InputBorder.none,
-          ),
-          style: TextStyle(
-            color: Colors.transparent,
-            height: .01,
-            fontSize: kIsWeb
-                ? 1
-                : 0.01, // it is a hidden textfield which should remain transparent and extremely small
-          ),
-          scrollPadding: widget.scrollPadding,
-          readOnly: widget.readOnly,
+    var textField = Padding(
+      padding: widget.errorTextMargin,
+      child: TextFormField(
+        textInputAction: widget.textInputAction,
+        controller: _textEditingController,
+        focusNode: _focusNode,
+        enabled: widget.enabled,
+        autofillHints: widget.enablePinAutofill && widget.enabled
+            ? <String>[AutofillHints.oneTimeCode]
+            : null,
+        autofocus: widget.autoFocus,
+        autocorrect: false,
+        keyboardType: widget.keyboardType,
+        keyboardAppearance: widget.keyboardAppearance,
+        textCapitalization: widget.textCapitalization,
+        validator: widget.validator,
+        onSaved: widget.onSaved,
+        autovalidateMode: widget.autovalidateMode,
+        inputFormatters: [
+          ...widget.inputFormatters,
+          LengthLimitingTextInputFormatter(widget.length),
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+        ],
+        // trigger on the complete event handler from the keyboard
+        onFieldSubmitted: widget.onSubmitted,
+        showCursor: false,
+        // using same as background color so tha it can blend into the view
+        cursorWidth: 0.01,
+        onTap: _onFocus,
+        decoration: InputDecoration(
+          contentPadding: const EdgeInsets.all(0),
+          border: InputBorder.none,
+          fillColor: widget.backgroundColor,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
         ),
+        style: TextStyle(
+          color: Colors.transparent,
+          height: .01,
+          fontSize: kIsWeb
+              ? 1
+              : 0.01, // it is a hidden textfield which should remain transparent and extremely small
+        ),
+        scrollPadding: widget.scrollPadding,
+        readOnly: widget.readOnly,
       ),
     );
 
@@ -780,44 +709,27 @@ class _PinCodeTextFieldState extends State<PinCodeTextField>
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: <Widget>[
-            AbsorbPointer(
-              // this is a hidden textfield under the pin code fields.
-              absorbing: true, // it prevents on tap on the text field
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Row(
+                  mainAxisAlignment: widget.mainAxisAlignment,
+                  children: _generateFields(),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
               child: widget.useExternalAutoFillGroup
                   ? textField
                   : AutofillGroup(
                       onDisposeAction: widget.onAutoFillDisposeAction,
                       child: textField,
                     ),
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: GestureDetector(
-                onTap: () {
-                  if (widget.onTap != null) widget.onTap!();
-                  _onFocus();
-                },
-                onLongPress: widget.enabled
-                    ? () async {
-                        var data = await Clipboard.getData("text/plain");
-                        if (data?.text?.isNotEmpty ?? false) {
-                          if (widget.beforeTextPaste != null) {
-                            if (widget.beforeTextPaste!(data!.text)) {
-                              _showPasteDialog(data.text!);
-                            }
-                          } else {
-                            _showPasteDialog(data!.text!);
-                          }
-                        }
-                      }
-                    : null,
-                child: Row(
-                  mainAxisAlignment: widget.mainAxisAlignment,
-                  children: _generateFields(),
-                ),
-              ),
             ),
           ],
         ),
@@ -829,7 +741,7 @@ class _PinCodeTextFieldState extends State<PinCodeTextField>
     var result = <Widget>[];
     for (int i = 0; i < widget.length; i++) {
       result.add(
-        Container(
+        Padding(
             padding: _pinTheme.fieldOuterPadding,
             child: AnimatedContainer(
               curve: widget.animationCurve,
