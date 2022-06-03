@@ -11,6 +11,8 @@ class PinCodeTextField extends StatefulWidget {
   /// length of how many cells there should be. 3-8 is recommended by me
   final int length;
 
+  final String? errorText;
+
   /// you already know what it does i guess :P default is false
   final bool obscureText;
 
@@ -123,7 +125,6 @@ class PinCodeTextField extends StatefulWidget {
   final Function? onTap;
 
   /// Configuration for paste dialog. Read more [DialogConfig]
-  final DialogConfig? dialogConfig;
 
   /// Theme for the pin cells. Read more [PinTheme]
   final PinTheme pinTheme;
@@ -236,7 +237,6 @@ class PinCodeTextField extends StatefulWidget {
     this.onSubmitted,
     this.errorAnimationController,
     this.beforeTextPaste,
-    this.dialogConfig,
     this.pinTheme = const PinTheme.defaults(),
     this.keyboardAppearance,
     this.validator,
@@ -264,6 +264,7 @@ class PinCodeTextField extends StatefulWidget {
     /// Default create internal [AutofillGroup]
     this.useExternalAutoFillGroup = false,
     this.scrollPadding = const EdgeInsets.all(20),
+    this.errorText,
   })  : assert(obscuringCharacter.isNotEmpty),
         super(key: key);
 
@@ -294,13 +295,7 @@ class _PinCodeTextFieldState extends State<PinCodeTextField>
   late Animation<Offset> _offsetAnimation;
 
   late Animation<double> _cursorAnimation;
-  DialogConfig get _dialogConfig => widget.dialogConfig == null
-      ? DialogConfig()
-      : DialogConfig(
-          affirmativeText: widget.dialogConfig!.affirmativeText,
-          dialogContent: widget.dialogConfig!.dialogContent,
-          dialogTitle: widget.dialogConfig!.dialogTitle,
-          negativeText: widget.dialogConfig!.negativeText);
+
   PinTheme get _pinTheme => widget.pinTheme;
 
   Timer? _blinkDebounce;
@@ -390,14 +385,6 @@ class _PinCodeTextFieldState extends State<PinCodeTextField>
     assert(_pinTheme.fieldHeight > 0);
     assert(_pinTheme.fieldWidth > 0);
     assert(_pinTheme.borderWidth >= 0);
-    assert(_dialogConfig.affirmativeText != null &&
-        _dialogConfig.affirmativeText!.isNotEmpty);
-    assert(_dialogConfig.negativeText != null &&
-        _dialogConfig.negativeText!.isNotEmpty);
-    assert(_dialogConfig.dialogTitle != null &&
-        _dialogConfig.dialogTitle!.isNotEmpty);
-    assert(_dialogConfig.dialogContent != null &&
-        _dialogConfig.dialogContent!.isNotEmpty);
   }
 
   runHapticFeedback() {
@@ -654,6 +641,7 @@ class _PinCodeTextFieldState extends State<PinCodeTextField>
         textInputAction: widget.textInputAction,
         controller: _textEditingController,
         focusNode: _focusNode,
+
         enabled: widget.enabled,
         autofillHints: widget.enablePinAutofill && widget.enabled
             ? <String>[AutofillHints.oneTimeCode]
@@ -678,6 +666,7 @@ class _PinCodeTextFieldState extends State<PinCodeTextField>
         cursorWidth: 0.01,
         onTap: _onFocus,
         decoration: InputDecoration(
+          errorText: widget.errorText,
           contentPadding: const EdgeInsets.all(0),
           border: InputBorder.none,
           fillColor: widget.backgroundColor,
@@ -833,44 +822,6 @@ class _PinCodeTextFieldState extends State<PinCodeTextField>
         _selectedIndex = data.length;
         _inputList = replaceInputList;
       });
-  }
-
-  List<Widget> _getActionButtons(String pastedText) {
-    var resultList = <Widget>[];
-    if (_dialogConfig.platform == Platform.iOS) {
-      resultList.addAll([
-        CupertinoDialogAction(
-          child: Text(_dialogConfig.negativeText!),
-          onPressed: () {
-            Navigator.of(context, rootNavigator: true).pop();
-          },
-        ),
-        CupertinoDialogAction(
-          child: Text(_dialogConfig.affirmativeText!),
-          onPressed: () {
-            _textEditingController!.text = pastedText;
-            Navigator.of(context, rootNavigator: true).pop();
-          },
-        ),
-      ]);
-    } else {
-      resultList.addAll([
-        TextButton(
-          child: Text(_dialogConfig.negativeText!),
-          onPressed: () {
-            Navigator.of(context, rootNavigator: true).pop();
-          },
-        ),
-        TextButton(
-          child: Text(_dialogConfig.affirmativeText!),
-          onPressed: () {
-            _textEditingController!.text = pastedText;
-            Navigator.of(context, rootNavigator: true).pop();
-          },
-        ),
-      ]);
-    }
-    return resultList;
   }
 }
 
